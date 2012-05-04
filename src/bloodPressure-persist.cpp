@@ -24,15 +24,7 @@ void run(string host,long time,short bp,short lbp,short pr,const char *deviceid)
 int persistSubscribeBloodPressure(string domainid,string deviceid,string loginfo,string logdata,string logconfpath,string host,string database)
 {
 	 tablename = database+DOT+domainid;
-	
-	 /*Importing log4cpp configuration and Creating category*/
-	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
-         log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
-         log4cpp::Category &bloodPersist = log4cpp::Category::getInstance( std::string(logdata));
-         log4cpp::PropertyConfigurator::configure(logconfpath);
-         bloodInfo.notice(" Blood Pressure Persist Subscriber Started " +deviceid);
-
-	 AbstractDataService *simpledds;
+	 DataService *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
     	 DataReader_ptr content_reader;
     	 BloodPressureDataReader_var bpReader;
@@ -43,9 +35,9 @@ int persistSubscribeBloodPressure(string domainid,string deviceid,string loginfo
 	 DDS::TopicQos tQos;
 	 getQos(tQos);
 
-         simpledds = new OpenSpliceDataService(tQos);
+	 simpledds = new OpenSpliceDataService(tQos,loginfo,logconfpath);
 	 typesupport = new BloodPressureTypeSupport();
-	
+	 simpledds->logger->info(" Blood Pressure Persist Subscriber Started %s" ,deviceid.c_str());	
 	 /*Creating content Filtered Subscriber*/
 	 StringSeq sSeqExpr;
          sSeqExpr.length(0);
@@ -55,8 +47,8 @@ int persistSubscribeBloodPressure(string domainid,string deviceid,string loginfo
    	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 
-	 bloodInfo.notice("Blood Pressure Persist Subscriber for "+deviceid+" in table "+ tablename);
-	 bloodInfo.notice("MONGODB Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
+	  simpledds->logger->info("Blood Pressure Persist Subscriber for %s in table %s",deviceid.c_str(),tablename.c_str());
+	  simpledds->logger->info("MONGODB Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
 	 while (1) 
 	{
 
@@ -82,13 +74,13 @@ int persistSubscribeBloodPressure(string domainid,string deviceid,string loginfo
 			run(host,bpList[i].timeOfMeasurement,bpList[i].systolicPressure,bpList[i].diastolicPressure,bpList[i].pulseRatePerMinute,temp.str().c_str());
 			prtemp <<bpList[i].deviceID <<COMMA<<bpList[i].timeOfMeasurement<<COMMA<< bpList[i].systolicPressure;
 			prtemp <<COMMA<<bpList[i].diastolicPressure<<COMMA<<bpList[i].pulseRatePerMinute;
-			bloodPersist.info(prtemp.str().c_str());
+			simpledds->logger->info(prtemp.str().c_str());
 			prtemp.str(CLEAN);
 				} 
 				catch( DBException &e ) 
 				{
 				temp <<e.what();
-				bloodInfo.notice(temp.str());
+				//simpledds->logger->info(temp.str());
 				}
 				
 				temp.str(CLEAN);
@@ -97,17 +89,9 @@ int persistSubscribeBloodPressure(string domainid,string deviceid,string loginfo
 		status = bpReader->return_loan(bpList, infoSeq);
        		checkStatus(status, "return_loan");
 	}
-	bloodInfo.notice("Blood Pressure Persist Subscriber Ends "+deviceid);	
+	 simpledds->logger->info("Blood Pressure Persist Subscriber Ends %s",deviceid.c_str());	
 	simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 }
-/*int main(int argc, char* argv[]) 
-{
-	 if (!parse_args_sub_persist(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath,host,database))
-    	 return 1;
-
-	
-}*/
-
 

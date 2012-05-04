@@ -13,15 +13,10 @@ std::stringstream temp,prtemp;
 int echoSubscribeBloodPressure(string domainid,string deviceid,string loginfo,string logdata,string logconfpath)
 {
 
-	/*Importing log4cpp configuration and Creating category*/
-	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
-         log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
-         log4cpp::Category &bloodEcho = log4cpp::Category::getInstance( std::string(logdata));
-         log4cpp::PropertyConfigurator::configure(logconfpath);
-         bloodInfo.notice(" Blood Pressure Subscriber Started " +deviceid);
-	 
+	
+
 	 /*Initializing SimpleDDS library*/
-	 AbstractDataService *simpledds;
+	 DataService *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
     	 DataReader_ptr content_reader;
     	 BloodPressureDataReader_var bpReader;
@@ -34,9 +29,9 @@ int echoSubscribeBloodPressure(string domainid,string deviceid,string loginfo,st
          tQos.durability_service.history_depth= 1024;
 
 	 /*Initializing Subscriber and DataWriter*/
-         simpledds = new OpenSpliceDataService(tQos);
+	 simpledds = new OpenSpliceDataService(tQos,loginfo,logconfpath);
 	 typesupport = new BloodPressureTypeSupport();
-    	 
+    	 simpledds->logger->info(" Blood Pressure Subscriber Started %s" ,deviceid.c_str());
 	 /*Creating content Filtered Subscriber*/
 	 StringSeq sSeqExpr;
          sSeqExpr.length(0);
@@ -46,8 +41,8 @@ int echoSubscribeBloodPressure(string domainid,string deviceid,string loginfo,st
    	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 	 
-	 bloodInfo.notice("Blood Pressure Subscriber For "+deviceid);
-	 bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
+	 simpledds->logger->info("Blood Pressure Subscriber For %s",deviceid.c_str());
+	 simpledds->logger->info("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
 	 /*Receiving Data from DDS */
 	 while (1) 
 	 {
@@ -73,7 +68,7 @@ int echoSubscribeBloodPressure(string domainid,string deviceid,string loginfo,st
 			prtemp <<bpList[i].deviceDomain<<COMMA;
 		        prtemp <<bpList[i].deviceID <<COMMA<<bpList[i].timeOfMeasurement<<COMMA<< bpList[i].systolicPressure;
 			prtemp <<COMMA<<bpList[i].diastolicPressure<<COMMA<<bpList[i].pulseRatePerMinute;
-			bloodEcho.info(prtemp.str().c_str());
+			 simpledds->logger->info(prtemp.str().c_str());
 			prtemp.str(CLEAN);
 			}
 	  	}
@@ -83,7 +78,7 @@ int echoSubscribeBloodPressure(string domainid,string deviceid,string loginfo,st
     	}
 
         /* We're done.  Delete everything */
-	bloodInfo.notice("Blood Pressure Subscriber Ends");	
+	simpledds->logger->info("Blood Pressure Subscriber Ends");	
         simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;

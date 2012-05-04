@@ -1,8 +1,7 @@
 # Makefile 
 
 # The top level directory
-TOPDIR=/home/viswa/SplittedFluent/bp/demo
-
+TOPDIR := $(shell pwd)
 # The source directory locations
 IDL_DIR=$(TOPDIR)/idl
 CPP_DIR=$(TOPDIR)
@@ -15,9 +14,10 @@ CPP=/usr/bin/g++
 IDLPP= idlpp
 
 # The C/C++ compiler flags
-CPPFLAGS= -g -Wall -I/opt/mongo-cxx-driver-v1.8/mongo/client -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
-LDFLAGS= -L/opt/mongo-cxx-driver-v1.8 -L/lib64 -L$(OSPL_HOME)/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib
-LIBS=  -lboost_thread -lboost_program_options -lboost_system -ldcpsgapi -ldcpssacpp -lddsdatabase -lddsos  /lib/libsimpledds.a /lib/libbloodpressure.a
+CPPFLAGS= -Wl,-allow-multiple-definition -g -Wall -I/opt/mongo-cxx-driver-v1.8/mongo/client -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
+LDFLAGS= -L/opt/mongo-cxx-driver-v1.8 -L/lib64 -L$(OSPL_HOME)/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib -Wl,-allow-multiple-definition
+LIBS=  -lboost_thread -lboost_program_options -lboost_system -ldcpsgapi -ldcpssacpp -lddsdatabase -lddsos  /lib/libsimpledds.a /lib/libbloodpressure.a /lib/liblogger.a
+#LIBS=  -lboost_thread -lboost_program_options -lboost_system -ldcpsgapi -ldcpssacpp -lddsdatabase -lddsos  /lib/libbloodpressure.a
 
 # Boost Libraries is used by the  publisher/generator examples
 #BOOST_LIBS= -lboost_thread -lboost_program_options -lboost_system

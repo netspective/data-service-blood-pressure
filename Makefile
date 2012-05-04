@@ -109,7 +109,7 @@ $(CPP_DIR)/bin/lib:
 	cd $(CPP_DIR)/src; \
 	ar cr $(CPP_DIR)/libbloodpressure.a $(CPP_DIR)/src/bloodPressure-pub.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/bp/libbp.a \
 	$(CPP_DIR)/src/bloodPressure-echo.o $(CPP_DIR)/src/bloodPressure-alarm.o $(CPP_DIR)/src/bloodPressure-persist.o; \
-        ranlib $(CPP_DIR)/libbloodpressure.a; \
+        ranlib $(CPP_DIR)/libbloodpressure.a; 
 	
 bp_install:
 	mkdir -p $(TARGET_PATH)/lib; \

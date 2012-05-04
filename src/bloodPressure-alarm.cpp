@@ -18,15 +18,11 @@ int alarmSubscribeBloodPressure(string  domainid,string deviceid,int sysmin,int 
 	 pulsemin = 60;
 	 pulsemax = 90;
 	
-	 /*Importing log4cpp configuration and Creating category*/
-	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
-         log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
-         log4cpp::Category &bloodAlarm = log4cpp::Category::getInstance( std::string(logdata));
-         log4cpp::PropertyConfigurator::configure(logconfpath);
-         bloodInfo.notice(" Blood Pressure Alarm Subscriber Started " +deviceid);
+	
+
 
 	 /*Initializing SimpleDDS library*/
-	 AbstractDataService *simpledds;
+	 DataService *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
     	 DataReader_ptr content_reader;
     	 BloodPressureDataReader_var bpReader;
@@ -37,9 +33,9 @@ int alarmSubscribeBloodPressure(string  domainid,string deviceid,int sysmin,int 
 	 DDS::TopicQos tQos;
 	 getQos(tQos);
 
-         simpledds = new OpenSpliceDataService(tQos);
+	 simpledds = new OpenSpliceDataService(tQos,loginfo,logconfpath);
 	 typesupport = new BloodPressureTypeSupport();
-
+         simpledds->logger->info(" Blood Pressure Alarm Subscriber Started %s" ,deviceid.c_str());
 	 /*Creating content Filtered Subscriber*/
 	 StringSeq sSeqExpr;
          sSeqExpr.length(0);
@@ -49,8 +45,8 @@ int alarmSubscribeBloodPressure(string  domainid,string deviceid,int sysmin,int 
    	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 
-	 bloodInfo.notice("Blood Pressure alarm Subscriber for "+deviceid);
-bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), DIASTOLIC(LEVEL), PULSERATE(LEVEL)");
+	 simpledds->logger->info("Blood Pressure alarm Subscriber for %s",deviceid.c_str());
+simpledds->logger->info("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), DIASTOLIC(LEVEL), PULSERATE(LEVEL)");
 	 while (1) 
 	 {
          	status = bpReader->take(
@@ -76,7 +72,7 @@ bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), 
 				prtemp <<bpList[i].timeOfMeasurement<<COMMA<<alarmString(bpList[i].systolicPressure,sysmin,sysmax);
 				prtemp <<COMMA<<alarmString(bpList[i].diastolicPressure,dismin,dismax)<<COMMA;
 				prtemp <<alarmString(bpList[i].pulseRatePerMinute,pulsemin,pulsemax);
-				bloodAlarm.info(prtemp.str().c_str());
+				simpledds->logger->info(prtemp.str().c_str());
 				prtemp.str(CLEAN);
 			}
 			
@@ -86,7 +82,7 @@ bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), 
         	checkStatus(status, "return_loan");
 	 	
     	}
-	bloodInfo.notice("Blood Pressure alarm Subscriber Ends");	
+	simpledds->logger->info("Blood Pressure alarm Subscriber Ends");	
         /* We're done.  Delete everything */
         simpledds->deleteReader(content_reader);
         delete simpledds;
@@ -94,14 +90,4 @@ bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), 
 
 
 }
-
-/*int main(int argc, char* argv[]) 
-{
-
- if (!parse_args_bp_alarm(argc,argv,domainid,deviceid,sysmin,sysmax,dismin,dismax,pulsemin,pulsemax,loginfo,logdata,logconfpath))
-    	 return 1;
-
-
-	}*/
-
 

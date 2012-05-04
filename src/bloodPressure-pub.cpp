@@ -51,15 +51,8 @@ char* bpRandomData()
 int publishBloodPressure(string deviceid,string domainid,string loginfo,string logdata,string logconfpath)
 {
 
-/*Importing log4cpp configuration and Creating category*/
-	log4cpp::Category &log_root = log4cpp::Category::getRoot();
-    	log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
-    	log4cpp::Category &bloodData = log4cpp::Category::getInstance( std::string(logdata));
-	log4cpp::PropertyConfigurator::configure(logconfpath);
-	bloodInfo.notice(" Blood Pressure Publisher Started "+deviceid);
-	
 	/*Initializing SimpleDDS library*/
-	AbstractDataService *simpledds;
+	DataService *simpledds;
 	BloodPressureTypeSupport_var typesupport;
 	DataWriter_ptr writer;
 	BloodPressureDataWriter_var bpWriter;
@@ -68,9 +61,11 @@ int publishBloodPressure(string deviceid,string domainid,string loginfo,string l
 	DDS::TopicQos tQos;
 	getQos(tQos);
 	
-	simpledds = new OpenSpliceDataService(tQos);
+	simpledds = new OpenSpliceDataService(tQos,loginfo,logconfpath);
+	simpledds->logger->info("Blood Pressure Publisher Started %s",deviceid.c_str());
 	typesupport = new BloodPressureTypeSupport();
 	writer = simpledds->publish(typesupport);
+	
 	bpWriter = BloodPressureDataWriter::_narrow(writer);
 	
 	flag=0;
@@ -79,11 +74,11 @@ int publishBloodPressure(string deviceid,string domainid,string loginfo,string l
 	/*Storing Domain and Device ID*/
 	data.deviceID = DDS::string_dup(deviceid.c_str());
 	data.deviceDomain = DDS::string_dup(domainid.c_str());
-	bloodInfo.notice("Blood Pressure Started Publishing Data In DDS");
-	bloodInfo.notice("Format: DOMAIN, DEVICEID, TIMEOFMEASURED, SYSTOLIC, DIASTOLIC, PULSERATE");	
+	
+	simpledds->logger->info("Blood Pressure Started Publishing Data In DDS");
+	simpledds->logger->info("Format: DOMAIN, DEVICEID, TIMEOFMEASURED, SYSTOLIC, DIASTOLIC, PULSERATE");	
 	while (1) 
 	{
-		
 			strcpy(buf,bpRandomData());
 			char * pch;
 			prtemp<<domainid<<COMMA<<deviceid<<COMMA;
@@ -99,7 +94,7 @@ int publishBloodPressure(string deviceid,string domainid,string loginfo,string l
 			pch = strtok (NULL, SEMI);
 			data.pulseRatePerMinute = (short)atoi (pch);
 			prtemp<<data.pulseRatePerMinute;
-			bloodData.info(prtemp.str().c_str());
+			simpledds->logger->data(prtemp.str().c_str());
 			bpWriter->write(data, NULL);
 			prtemp.str(CLEAN);
 		
@@ -107,19 +102,9 @@ int publishBloodPressure(string deviceid,string domainid,string loginfo,string l
 	}
 	
 	/*Deleting SimpleDDS Instance*/
-	bloodInfo.notice(" BloodPressure Publisher Ends");
+	simpledds->logger->info(" BloodPressure Publisher Ends");
 	simpledds->deleteWriter(writer);
 	delete simpledds;
 	return 0;
 
 }
-
-//int main(int argc, char* argv[]) 
-//{
-//	if (!parse_args_pub(argc, argv,hostip, port,domainid,deviceid,loginfo,logdata,logconfpath))
-//    	return 1;
-//	publishBloodPressure(hostip,port,deviceid,domainid,loginfo,logdata,logconfpath);
-	
-//	return 0;
-//}
-
