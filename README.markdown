@@ -2,6 +2,10 @@
 
 BloodPressure library is intended to greatly simplify the use of BloodPressure device simulation with DDS. As such, BloodPressure library have functions that reduces by several times the line of code that need to be written for a creating BloodPressure Simulation DDS application. 
 
+# Prerequisite
+
+[Setting Up Logging Service](https://github.com/netspective/commons-logging-cpp/blob/master/README.md)
+
 # Compilation and Installation
 Clone the library from the github
 
